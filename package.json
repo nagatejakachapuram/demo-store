@@ -14,7 +14,7 @@
     "dev:live": "BIFY_DEMO_MOCK=0 PORT=3200 npm run dev"
   },
   "dependencies": {
-    "@bify/commerce-widget": "*",
-    "@bify/sdk": "*"
+    "@bify/commerce-widget": "0.1.0-rc.1",
+    "@bify/sdk": "0.1.0-rc.1"
   }
 }
