@@ -12,6 +12,30 @@
 
 const truthy = (value) => /^(1|true|yes|on)$/i.test((value ?? "").trim());
 
+/**
+ * Accepts a Stripe key only if it is publishable.
+ *
+ * Every value this returns is served to the browser inside the checkout
+ * session, so a secret key placed in a publishable slot is not a
+ * misconfiguration that shows up as a broken card form — it is a live
+ * credential handed to every visitor, and the page still looks fine. The two
+ * key types differ by one letter in an environment variable, so the mistake is
+ * easy to make and impossible to see once made.
+ *
+ * A rejected key disables the card rail rather than leaking: no card button is
+ * strictly better than a published secret.
+ */
+function publishableKeyOnly(value, source) {
+  const key = (value ?? "").trim();
+  if (!key || key.startsWith("pk_")) return key;
+  console.error(
+    `${source} is not a publishable key (expected "pk_", got "${key.slice(0, 3)}…"). ` +
+      "Ignoring it and disabling the card rail. If this was a secret key it has been exposed " +
+      "to every browser that loaded the store — roll it in the Stripe dashboard now.",
+  );
+  return "";
+}
+
 export const config = {
   /** Commerce API base. Defaults to the local backend for `npm run dev`. */
   backendURL: (process.env.BIFY_BACKEND_URL ?? "http://localhost:8081").replace(/\/$/, ""),
@@ -32,7 +56,7 @@ export const config = {
    * as `demoStripeSecretKey` below. Publishable keys are public by design and
    * ship in client-side JS; a secret key (sk_...) must never be placed here.
    */
-  demoStripeKey: (process.env.BIFY_DEMO_STRIPE_KEY ?? "").trim(),
+  demoStripeKey: publishableKeyOnly(process.env.BIFY_DEMO_STRIPE_KEY, "BIFY_DEMO_STRIPE_KEY"),
 
   /**
    * Stripe PUBLISHABLE key for LIVE mode — a different key, and usually a
@@ -53,7 +77,9 @@ export const config = {
    * runs on the platform's own Stripe account — the usual case on testnet. Set
    * this explicitly once the two are different accounts.
    */
-  platformStripeKey: (process.env.BIFY_PLATFORM_STRIPE_PUBLISHABLE_KEY || process.env.BIFY_DEMO_STRIPE_KEY || "").trim(),
+  platformStripeKey:
+    publishableKeyOnly(process.env.BIFY_PLATFORM_STRIPE_PUBLISHABLE_KEY, "BIFY_PLATFORM_STRIPE_PUBLISHABLE_KEY") ||
+    publishableKeyOnly(process.env.BIFY_DEMO_STRIPE_KEY, "BIFY_DEMO_STRIPE_KEY"),
 
   /**
    * Stripe SECRET key (sk_test_...), server-side only.

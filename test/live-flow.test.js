@@ -150,6 +150,31 @@ test("live mode hands the widget the platform's publishable key, not the demo's"
   assert.equal(config.cardRail, true, "the card rail follows the platform key in live mode");
 });
 
+// A publishable and a secret key differ by one letter in an environment
+// variable. Everything this endpoint returns is served to the browser, so the
+// wrong one there is a live credential published to every visitor — with a page
+// that still looks like it is working.
+test("a secret key in a publishable slot is never served to the browser", async () => {
+  const leaky = await startDemo(upstream.url, {
+    BIFY_DEMO_STRIPE_KEY: "sk_test_51UC1rHPjjOkPlYDYsecret",
+    BIFY_PLATFORM_STRIPE_PUBLISHABLE_KEY: "",
+  });
+  try {
+    const session = await (await fetch(`${leaky.url}/api/checkout-session`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ productId: "jinked-sticker-pack", quantity: 1 }),
+    })).json();
+    assert.equal(session.demoPublishableKey, undefined, "a secret key must never reach the session payload");
+    assert.ok(!JSON.stringify(session).includes("sk_test"), "no secret key anywhere in the response");
+
+    const config = await (await fetch(`${leaky.url}/api/demo-config`)).json();
+    assert.equal(config.cardRail, false, "the rail is disabled rather than the secret published");
+  } finally {
+    leaky.close();
+  }
+});
+
 // The common testnet setup runs the demo on the platform's own Stripe account,
 // where one key serves both modes. That deployment must keep working untouched.
 test("live mode falls back to the single key when only one account is in play", async () => {
