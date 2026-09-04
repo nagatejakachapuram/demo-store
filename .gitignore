@@ -1,0 +1,11 @@
+node_modules/
+local.env
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+
+# Assembled by scripts/build-demo.mjs; Vercel's output directory.
+public/
+.vercel/

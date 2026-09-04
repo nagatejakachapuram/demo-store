@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jinked</title>
+    <link rel="stylesheet" href="/demo.css" />
+  </head>
+  <body>
+    <header class="store-header">
+      <a class="store-logo" href="/" aria-label="Jinked home">JINKED</a>
+      <nav aria-label="Store navigation">
+        <a href="/">Shop</a>
+        <a href="/#collections">Collections</a>
+        <a href="/#about">About</a>
+      </nav>
+      <div class="header-right">
+        <span class="status-pill" data-status-pill hidden>Loading</span>
+      </div>
+    </header>
+
+    <p class="sim-banner" data-sim-banner hidden></p>
+
+    <main class="wrap product-page">
+      <nav class="crumb" aria-label="Breadcrumb"><a href="/">← Shop</a></nav>
+
+      <section class="product-layout" data-product hidden>
+        <div class="product-visual" data-visual></div>
+
+        <article class="product-info">
+          <p class="label" data-eyebrow></p>
+          <h1 data-name></h1>
+          <p class="product-price" data-price></p>
+          <p class="product-description" data-description></p>
+          <div class="spec" data-spec></div>
+          <p class="product-note" data-note></p>
+
+          <!-- The BIFY widget renders the quantity control and the pay action.
+               The store deliberately does not duplicate either one. -->
+          <div id="bify-checkout" aria-label="Checkout"></div>
+
+          <p class="powered-by">Checkout, settlement, and certificate issuance by BIFY.</p>
+          <p class="demo-error" data-demo-error hidden role="alert"></p>
+        </article>
+      </section>
+    </main>
+
+    <script type="module" src="/product.js"></script>
+  </body>
+</html>

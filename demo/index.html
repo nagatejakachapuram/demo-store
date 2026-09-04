@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jinked — Season 04</title>
+    <meta
+      name="description"
+      content="A working demo store built on the BIFY commerce SDK: pay in USDC, receive a verifiable certificate of authenticity."
+    />
+    <link rel="stylesheet" href="/demo.css" />
+    <link rel="preload" as="image" href="/img/hero.jpg" />
+  </head>
+  <body>
+    <header class="store-header">
+      <a class="store-logo" href="/" aria-label="Jinked home">JINKED</a>
+      <nav aria-label="Store navigation">
+        <a href="/" aria-current="page">Shop</a>
+        <a href="#collections">Collections</a>
+        <a href="#about">About</a>
+      </nav>
+      <div class="header-right">
+        <span class="status-pill" data-status-pill hidden>Loading</span>
+      </div>
+    </header>
+
+    <p class="sim-banner" data-sim-banner hidden></p>
+
+    <main>
+      <section class="hero">
+        <img src="/img/hero.jpg" alt="" fetchpriority="high" />
+        <div class="hero-copy">
+          <p class="label">Season 04 — Autumn</p>
+          <h1>Everything you buy here, you can prove you own.</h1>
+          <p>
+            Fifteen pieces, made in small runs. Every order settles in USDC on Base and issues a signed certificate
+            of authenticity to your own wallet — not an email receipt, not an account on our server.
+          </p>
+        </div>
+      </section>
+
+      <div class="wrap" id="collections">
+        <div class="collection-bar">
+          <div class="filters" role="group" aria-label="Filter by collection" data-filters></div>
+          <span class="count" data-count></span>
+        </div>
+
+        <div class="grid" data-grid aria-live="polite">
+          <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+        </div>
+
+        <p class="demo-error" data-demo-error hidden role="alert"></p>
+      </div>
+
+      <div class="wrap">
+        <footer class="store-footer" id="about">
+          <div class="cols">
+            <div>
+              <p class="label">About Jinked</p>
+              <p>
+                A demonstration storefront for the BIFY commerce SDK. The products are not real and no order is
+                fulfilled — the checkout, settlement, and certificate flow are.
+              </p>
+            </div>
+            <div>
+              <p class="label">Payments</p>
+              <p>
+                USDC on Base Sepolia testnet. The store keeps its own catalogue and prices; BIFY receives an order
+                snapshot and settles it.
+              </p>
+            </div>
+            <div>
+              <p class="label">Build this</p>
+              <p>
+                Read the <a href="https://docs.bify.io" rel="noreferrer">integration guide</a>. Photography from
+                <a href="https://unsplash.com" rel="noreferrer">Unsplash</a>.
+              </p>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </main>
+
+    <script type="module" src="/shop.js"></script>
+  </body>
+</html>

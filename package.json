@@ -1,0 +1,20 @@
+{
+  "name": "@bify/demo-store",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Jinked — the reference storefront for the BIFY commerce SDKs. Not published.",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "node --env-file-if-exists=local.env scripts/dev-server.mjs",
+    "dev:mock": "BIFY_DEMO_MOCK=1 PORT=3200 npm run dev",
+    "build": "node scripts/build-demo.mjs",
+    "dev:live": "BIFY_DEMO_MOCK=0 PORT=3200 npm run dev"
+  },
+  "dependencies": {
+    "@bify/commerce-widget": "*",
+    "@bify/sdk": "*"
+  }
+}

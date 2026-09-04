@@ -1,0 +1,447 @@
+/* Jinked — demo storefront.
+   Editorial: photography carries the page, type is a serif display over a
+   near-monochrome ground, chrome is hairlines and small caps. No cards, no
+   gradients, no shadows. Everything here is the PARTNER's design; the BIFY
+   widget mounts into #bify-checkout and brings its own. */
+
+:root {
+  color-scheme: light;
+  --paper: #f2efe9;
+  --paper-2: #e9e5dd;
+  --ink: #14120f;
+  --ink-2: #57524a;
+  --ink-3: #8d8579;
+  --rule: #d6d1c6;
+  --accent: #14120f;
+  --measure: 1440px;
+  --gutter: 40px;
+  --serif: "Times New Roman", Times, Georgia, serif;
+  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-synthesis: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --paper: #0d0c0b;
+    --paper-2: #171512;
+    --ink: #f2efe9;
+    --ink-2: #a9a297;
+    --ink-3: #6f6860;
+    --rule: #2b2822;
+    --accent: #f2efe9;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+[hidden] { display: none !important; }
+
+.wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
+
+/* Small-caps label, the only recurring UI type treatment. */
+.label {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ---------- header ---------- */
+
+.store-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 20px var(--gutter);
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+
+.store-logo {
+  justify-self: start;
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+}
+
+.store-header nav { display: flex; justify-self: center; gap: 34px; }
+
+.store-header nav a {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  padding-bottom: 2px;
+  border-bottom: 1px solid transparent;
+}
+
+.store-header nav a:hover,
+.store-header nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--ink); }
+
+.header-right { justify-self: end; }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.status-pill::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-pill[data-status="connected"]::before { background: #3d7a4f; }
+.status-pill[data-status="simulated"]::before { background: #b98217; }
+.status-pill[data-status="unavailable"]::before { background: #a8443c; }
+
+.sim-banner {
+  position: relative;
+  margin: 0;
+  padding: 9px calc(var(--gutter) + 28px);
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-2);
+  color: var(--ink-2);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  text-align: center;
+}
+
+.sim-banner .notice-dismiss { right: calc(var(--gutter) - 6px); }
+
+.sim-banner b { color: var(--ink); font-weight: 600; }
+
+/* ---------- hero ---------- */
+
+.hero {
+  position: relative;
+  min-height: min(78vh, 760px);
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  background: var(--paper-2);
+}
+
+.hero img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 28%;
+}
+
+/* Scrim so the display type stays legible over any photograph. */
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(8, 7, 6, 0.72) 0%, rgba(8, 7, 6, 0.28) 42%, rgba(8, 7, 6, 0.05) 100%);
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 var(--gutter) 56px;
+  color: #f6f3ed;
+}
+
+.hero-copy .label { color: rgba(246, 243, 237, 0.7); }
+
+.hero-copy h1 {
+  margin: 18px 0 0;
+  max-width: 16ch;
+  font-family: var(--serif);
+  /* The minimum has to clear the narrowest column (375px − 44px gutters), or
+     long words in the display line run past the right edge. */
+  font-size: clamp(32px, 7.4vw, 104px);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  text-wrap: balance;
+}
+
+.hero-copy p {
+  margin: 22px 0 0;
+  max-width: 52ch;
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgba(246, 243, 237, 0.86);
+}
+
+/* ---------- collection bar ---------- */
+
+.collection-bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 40px 0 18px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.filters { display: flex; flex-wrap: wrap; gap: 26px; }
+
+.filter {
+  padding: 0 0 3px;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: none;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.filter:hover { color: var(--ink-2); }
+.filter[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+
+.count { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); }
+
+/* ---------- product grid ---------- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 48px 32px;
+  padding: 44px 0 96px;
+}
+
+.card { display: block; }
+
+.card-art {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--paper-2);
+}
+
+.card-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.card:hover .card-art img { transform: scale(1.035); }
+
+.badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 5px 10px;
+  background: rgba(242, 239, 233, 0.94);
+  color: #14120f;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.card-body {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 16px;
+  padding-top: 16px;
+}
+
+.card-name {
+  grid-column: 1;
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.card-price {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.card-blurb { grid-column: 1 / -1; margin: 0; font-size: 13px; color: var(--ink-3); }
+
+.empty { grid-column: 1 / -1; padding: 80px 0; text-align: center; color: var(--ink-3); }
+
+/* ---------- product page ---------- */
+
+.product-page { padding: 0 0 110px; }
+
+.crumb { display: flex; gap: 10px; padding: 22px 0 0; }
+.crumb a { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); }
+.crumb a:hover { color: var(--ink); }
+
+.product-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 0 80px;
+  padding-top: 26px;
+  align-items: start;
+}
+
+.product-visual { aspect-ratio: 4 / 5; overflow: hidden; background: var(--paper-2); }
+.product-visual img { width: 100%; height: 100%; object-fit: cover; }
+
+.product-info { position: sticky; top: 108px; padding-top: 6px; }
+
+.product-info h1 {
+  margin: 14px 0 0;
+  font-family: var(--serif);
+  font-size: clamp(34px, 3.6vw, 52px);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.04;
+}
+
+.product-price {
+  margin: 18px 0 0;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+
+.product-description { margin: 22px 0 0; max-width: 46ch; color: var(--ink-2); }
+
+.spec { margin: 30px 0 0; border-top: 1px solid var(--rule); }
+
+.spec div {
+  display: grid;
+  grid-template-columns: 1fr;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.product-note { margin: 22px 0 0; font-size: 12.5px; color: var(--ink-3); }
+
+/* The widget mounts here. It is the ONLY checkout control on the page —
+   quantity and the pay action both belong to it. */
+#bify-checkout { margin-top: 30px; min-height: 52px; }
+
+.powered-by { margin: 14px 0 0; font-size: 11.5px; letter-spacing: 0.02em; color: var(--ink-3); }
+
+.demo-error {
+  position: relative;
+  margin: 18px 0 0;
+  padding: 12px 40px 12px 14px;
+  border: 1px solid #b8837d;
+  background: rgba(168, 68, 60, 0.07);
+  color: #8c3b34;
+  font-size: 13px;
+}
+
+/* Dismiss control on notices. A real button so it is keyboard reachable; the
+   hit area is padded out to 28px because a bare glyph is a poor target. */
+.notice-dismiss {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-top: -14px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 19px;
+  line-height: 1;
+  opacity: 0.6;
+  cursor: pointer;
+}
+
+.notice-dismiss:hover { opacity: 1; background: rgba(127, 127, 127, 0.14); }
+.notice-dismiss:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; opacity: 1; }
+
+@media (prefers-color-scheme: dark) {
+  .demo-error { border-color: #5d3833; color: #e2a49d; }
+}
+
+/* ---------- footer ---------- */
+
+.store-footer {
+  border-top: 1px solid var(--rule);
+  padding: 44px 0 72px;
+  color: var(--ink-3);
+  font-size: 12.5px;
+}
+
+.store-footer .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+.store-footer p { margin: 10px 0 0; max-width: 40ch; }
+.store-footer a { color: var(--ink-2); border-bottom: 1px solid var(--rule); }
+.store-footer a:hover { color: var(--ink); }
+
+/* ---------- loading ---------- */
+
+.skeleton { aspect-ratio: 4 / 5; background: var(--paper-2); }
+
+@media (prefers-reduced-motion: reduce) {
+  .card-art img { transition: none; }
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 1180px) {
+  .grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 900px) {
+  :root { --gutter: 22px; }
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 36px 20px; }
+  .product-layout { grid-template-columns: 1fr; gap: 32px; }
+  .product-info { position: static; }
+  .store-header { grid-template-columns: 1fr auto; gap: 12px; }
+  .store-header nav { display: none; }
+  .store-footer .cols { grid-template-columns: 1fr; }
+  .hero { min-height: 62vh; }
+  .hero-copy h1 { max-width: none; }
+  .hero-copy p { font-size: 14px; }
+}
+
+@media (max-width: 560px) {
+  .grid { grid-template-columns: 1fr; }
+  .collection-bar { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .filters { gap: 18px; }
+}
