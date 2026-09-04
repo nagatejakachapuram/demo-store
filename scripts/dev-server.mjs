@@ -48,6 +48,12 @@ async function readJsonBody(req) {
   return JSON.parse(text);
 }
 
+/** The proxy forwards bytes rather than re-encoded JSON — see publicApi(). */
+async function readRawBody(req) {
+  if (req.method === "GET" || req.method === "HEAD") return "";
+  return readBody(req);
+}
+
 /** Write a `{status, headers, json|html|raw}` result from the shared handlers. */
 function send(res, result) {
   const headers = { ...result.headers };
@@ -71,9 +77,27 @@ function safePath(root, relativePath) {
   return candidate;
 }
 
+const isFile = (path) => Boolean(path) && existsSync(path) && statSync(path).isFile();
+
+/**
+ * Resolve a request path to a file, extensionless names included.
+ *
+ * Vercel serves this demo with `cleanUrls`, so /product is the real address of
+ * product.html and a link to the .html name is answered with a redirect. The
+ * dev server matches that here, otherwise the two deployments disagree about
+ * what the site's own links point at.
+ */
+function resolveStatic(root, relativePath) {
+  const direct = safePath(root, relativePath);
+  if (isFile(direct)) return direct;
+  if (extname(relativePath)) return undefined;
+  const asHtml = safePath(root, `${relativePath}.html`);
+  return isFile(asHtml) ? asHtml : undefined;
+}
+
 function serveFile(res, root, relativePath, fallback = false) {
-  const filePath = safePath(root, relativePath);
-  if (!filePath || !existsSync(filePath) || !statSync(filePath).isFile()) {
+  const filePath = resolveStatic(root, relativePath);
+  if (!filePath) {
     if (fallback) return serveFile(res, root, "/index.html");
     res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
     res.end("Not found");
@@ -105,7 +129,7 @@ async function handler(req, res) {
     }
 
     if (url.pathname.startsWith("/api/bify-api/")) {
-      const body = await readJsonBody(req);
+      const body = await readRawBody(req);
       return send(
         res,
         await publicApi({

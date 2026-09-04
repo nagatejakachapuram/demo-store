@@ -19,7 +19,9 @@ const COLLECTION_LABEL = {
 
 function card(product, eager) {
   const badge = product.badge ? `<span class="badge">${escapeHtml(product.badge)}</span>` : "";
-  return `<a class="card" href="/product.html?id=${encodeURIComponent(product.id)}">
+  // Extensionless: the deployment serves clean URLs, so linking to the .html
+  // name costs every product click a redirect before the page even starts.
+  return `<a class="card" href="/product?id=${encodeURIComponent(product.id)}">
     <div class="card-art">
       <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}"
            loading="${eager ? "eager" : "lazy"}" decoding="async" width="1100" height="1375">

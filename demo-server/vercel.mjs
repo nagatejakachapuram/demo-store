@@ -7,29 +7,41 @@ export function requestOrigin(req) {
   return originFromHeaders(req.headers ?? {});
 }
 
+const MAX_BODY_BYTES = 64 * 1024;
+
 /**
- * Vercel usually parses a JSON body onto `req.body`, but not for every
- * content-type or runtime, so fall back to reading the stream.
+ * The request payload as text, exactly as the client sent it.
+ *
+ * Vercel hands `req.body` in whichever shape its body parser settled on: a
+ * parsed object for a plain function route, but raw bytes for a request that
+ * arrived through a `vercel.json` rewrite. A Buffer satisfies
+ * `typeof value === "object"`, so code that treats any object as parsed JSON
+ * re-serialises the bytes into `{"type":"Buffer","data":[…]}` and forwards a
+ * request whose fields have all silently disappeared. Every shape is handled
+ * here, once, so no caller has to know which one it got.
  */
-export async function jsonBody(req) {
-  if (req.method === "GET" || req.method === "HEAD") return undefined;
-  if (req.body && typeof req.body === "object") return req.body;
-  if (typeof req.body === "string") {
-    if (!req.body) return {};
-    try {
-      return JSON.parse(req.body);
-    } catch {
-      throw new SyntaxError("invalid json body");
-    }
-  }
+export async function rawBody(req) {
+  if (req.method === "GET" || req.method === "HEAD") return "";
+  const body = req.body;
+  if (Buffer.isBuffer(body)) return body.toString("utf8");
+  if (ArrayBuffer.isView(body)) return Buffer.from(body.buffer, body.byteOffset, body.byteLength).toString("utf8");
+  if (typeof body === "string") return body;
+  if (body && typeof body === "object") return JSON.stringify(body);
+
   const chunks = [];
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > 64 * 1024) throw new Error("request body is too large");
+    if (size > MAX_BODY_BYTES) throw new Error("request body is too large");
     chunks.push(chunk);
   }
-  const text = Buffer.concat(chunks).toString("utf8");
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+/** The payload parsed as JSON, for the routes that read fields out of it. */
+export async function jsonBody(req) {
+  if (req.method === "GET" || req.method === "HEAD") return undefined;
+  const text = await rawBody(req);
   if (!text) return {};
   try {
     return JSON.parse(text);

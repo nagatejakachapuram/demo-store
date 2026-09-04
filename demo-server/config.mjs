@@ -52,8 +52,20 @@ export const config = {
   network: "base-sepolia",
   chainId: 84532,
 
-  /** Upstream request budget. Vercel's default function timeout is 10s. */
-  upstreamTimeoutMs: 5000,
+  /**
+   * Upstream request budget, under Vercel's 10s default function timeout.
+   *
+   * A checkout call is carrying a payment action, so it gets the larger share:
+   * timing it out strands the buyer mid-purchase, and the commerce API's first
+   * request after an idle period pays a cold start.
+   */
+  upstreamTimeoutMs: 8000,
+
+  /**
+   * The status probe blocks the storefront's first paint, so it fails fast. A
+   * slow probe only mislabels the status pill; it must not hold up the page.
+   */
+  healthTimeoutMs: 3000,
 };
 
 /**
@@ -68,9 +80,15 @@ export const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   "script-src 'self' https://js.stripe.com",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data:",
-  "connect-src 'self' https://api.stripe.com",
-  "frame-src https://js.stripe.com https://hooks.stripe.com",
+  // data: carries the widget's inlined brand mark; q.stripe.com serves the
+  // card-brand and wallet artwork inside the payment form.
+  "img-src 'self' data: https://*.stripe.com",
+  // Stripe.js runs in this document, so the frames and requests it opens are
+  // governed by this policy rather than Stripe's own: m.stripe.network carries
+  // the fraud signals, and r.stripe.com the error reporting. Omitting either
+  // leaves the card form working but filling the console with violations.
+  "connect-src 'self' https://api.stripe.com https://m.stripe.com https://r.stripe.com https://q.stripe.com",
+  "frame-src https://js.stripe.com https://hooks.stripe.com https://m.stripe.network",
   "object-src 'none'",
   "base-uri 'none'",
   "frame-ancestors 'none'",

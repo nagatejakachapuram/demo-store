@@ -58,7 +58,7 @@ export async function demoConfig() {
     try {
       const response = await fetch(`${config.backendURL}/healthz`, {
         headers: { accept: "application/json" },
-        signal: AbortSignal.timeout(config.upstreamTimeoutMs),
+        signal: AbortSignal.timeout(config.healthTimeoutMs),
       });
       if (!response.ok) {
         backend = "unavailable";
@@ -178,11 +178,19 @@ function withDemoKey(session) {
  * client token. These carry no partner credential; the proxy exists so the
  * demo runs under one origin and one CSP.
  *
- * @param {{path: string, method: string, body?: unknown, search?: string, origin: string}} input
+ * `body` is the raw request text. A passthrough must not parse and re-encode
+ * the payload: the client token that authenticates these routes travels inside
+ * it, and a re-encoding that reshapes the payload surfaces upstream as
+ * "checkout session is invalid or expired" — an error that describes the
+ * session rather than the request that mangled it.
+ *
+ * @param {{path: string, method: string, body?: string, search?: string, origin: string}} input
  */
-export async function publicApi({ path, method, body, search = "", origin }) {
+export async function publicApi({ path, method, body = "", search = "", origin }) {
+  const sendsBody = method !== "GET" && method !== "HEAD";
+
   if (config.mockMode) {
-    const result = await mock.publicApi({ path, body: body ?? {}, origin });
+    const result = await mock.publicApi({ path, body: parseJsonOrEmpty(body), origin });
     return { ...result, headers: noStore };
   }
 
@@ -190,7 +198,7 @@ export async function publicApi({ path, method, body, search = "", origin }) {
     const response = await fetch(`${config.backendURL}${path}${search}`, {
       method,
       headers: { accept: "application/json", "content-type": "application/json" },
-      body: method === "GET" || method === "HEAD" ? undefined : JSON.stringify(body ?? {}),
+      body: sendsBody ? body || "{}" : undefined,
       signal: AbortSignal.timeout(config.upstreamTimeoutMs),
     });
     const text = await response.text();
@@ -207,6 +215,17 @@ export async function publicApi({ path, method, body, search = "", origin }) {
     return { status: response.status, headers: noStore, json: rewriteCertificateLinks(payload, origin) };
   } catch {
     return fail(502, "The demo checkout backend is unavailable.");
+  }
+}
+
+/** Simulated mode reads fields out of the payload; live mode never does. */
+function parseJsonOrEmpty(text) {
+  if (!text) return {};
+  try {
+    const value = JSON.parse(text);
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  } catch {
+    return {};
   }
 }
 

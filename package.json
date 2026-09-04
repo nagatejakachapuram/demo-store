@@ -11,7 +11,8 @@
     "dev": "node --env-file-if-exists=local.env scripts/dev-server.mjs",
     "dev:mock": "BIFY_DEMO_MOCK=1 PORT=3200 npm run dev",
     "build": "node scripts/build-demo.mjs",
-    "dev:live": "BIFY_DEMO_MOCK=0 PORT=3200 npm run dev"
+    "dev:live": "BIFY_DEMO_MOCK=0 PORT=3200 npm run dev",
+    "test": "node --test \"test/*.test.js\""
   },
   "dependencies": {
     "@bify/commerce-widget": "0.1.0-rc.1",

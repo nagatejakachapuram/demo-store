@@ -68,6 +68,15 @@ npm run dev:mock
 Simulated mode fabricates a fully-shaped session. Nothing is charged and no
 chain is contacted; the banner and the status pill say so on every page.
 
+```bash
+npm test
+```
+
+Runs the demo's own checks. The public-checkout proxy is exercised in **live**
+mode against a stub commerce API, because simulated mode short-circuits before
+the proxy forwards anything and so cannot catch a request the demo mangles on
+the way out.
+
 ## Deploy to Vercel
 
 The demo depends on the two sibling workspace packages, so the build needs the
@@ -145,10 +154,16 @@ In live mode both come from the commerce backend and none of this applies.
 ## Content Security Policy
 
 Defined once in `demo-server/config.mjs` and mirrored in `vercel.json`, so a
-policy problem shows up in `npm run dev` rather than after a deploy. Product
-photography is self-hosted, so `img-src` stays at `'self'`. `js.stripe.com` and
-`api.stripe.com` are allowed because the widget loads Stripe when the card rail
-is configured — drop them if you never enable it.
+policy problem shows up in `npm run dev` rather than after a deploy. `npm test`
+asserts the two copies are byte-identical: a policy that drifts only in
+production is one the dev server can no longer tell you anything about.
+
+Product photography is self-hosted; `img-src` also allows `data:` for the
+widget's inlined brand mark. Stripe's origins are allowed because the widget
+loads Stripe when the card rail is configured. Stripe.js runs inside this
+document, so the frames and requests it opens — `m.stripe.network` for fraud
+signals, `r.stripe.com` for error reporting — are governed by this policy rather
+than by Stripe's own. Drop them all if you never enable the card rail.
 
 ## Changing the catalogue
 
