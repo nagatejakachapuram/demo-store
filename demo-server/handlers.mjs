@@ -142,6 +142,11 @@ export async function createCheckoutSession({ body, query = {} }) {
       quantity,
       externalOrderId,
       shippingRequired: product.shippingRequired,
+      // The frontend package requires a certificate recipient before it can
+      // safely offer the walletless card rail. This testnet demo already owns
+      // a deterministic buyer fixture, so bind live demo sessions to the same
+      // recipient instead of mounting a second checkout UI to collect one.
+      walletAddress: mock.MOCK_ADDRESSES.MOCK_BUYER,
       idempotencyKey: `checkout:${externalOrderId}`,
       certificate: { enabled: true },
     });
