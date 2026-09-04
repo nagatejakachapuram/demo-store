@@ -3,7 +3,13 @@
   "buildCommand": "npm run build",
   "outputDirectory": "public",
   "cleanUrls": true,
-  "rewrites": [{ "source": "/certificate/:id", "destination": "/api/certificate?id=:id" }],
+  "rewrites": [
+    {
+      "source": "/api/bify-api/:path*",
+      "destination": "/api/bify-api?path=:path*"
+    },
+    { "source": "/certificate/:id", "destination": "/api/certificate?id=:id" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
