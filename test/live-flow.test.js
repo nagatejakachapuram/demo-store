@@ -41,7 +41,7 @@ async function startUpstream() {
   return { seen, url: `http://localhost:${server.address().port}`, close: () => server.close() };
 }
 
-async function startDemo(backendURL) {
+async function startDemo(backendURL, overrides = {}) {
   const port = 3400 + Math.floor(Math.random() * 200);
   const child = spawn(process.execPath, [resolve(root, "scripts/dev-server.mjs")], {
     cwd: root,
@@ -51,8 +51,12 @@ async function startDemo(backendURL) {
       BIFY_DEMO_MOCK: "0",
       BIFY_BACKEND_URL: backendURL,
       BIFY_PARTNER_API_KEY: "test_partner_key",
-      BIFY_DEMO_STRIPE_KEY: "",
+      // Deliberately different accounts, so a mode that reaches for the wrong
+      // one is visible rather than coincidentally correct.
+      BIFY_DEMO_STRIPE_KEY: "pk_test_simulated_account",
+      BIFY_PLATFORM_STRIPE_PUBLISHABLE_KEY: "pk_test_platform_account",
       BIFY_DEMO_STRIPE_SECRET_KEY: "",
+      ...overrides,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -126,6 +130,46 @@ test("the storefront's own links resolve without a redirect", async () => {
   const shop = await (await fetch(`${demo.url}/shop.js`)).text();
   assert.ok(!shop.includes("/product.html?id="), "product cards must link to the clean URL");
   assert.ok(shop.includes("/product?id="));
+});
+
+// Live mode opens a destination charge: the PaymentIntent is minted on the BIFY
+// platform account, so only that account's publishable key can confirm it. The
+// simulated-mode key belongs to the demo's own account and would be rejected in
+// the browser — after the charge had already been opened.
+test("live mode hands the widget the platform's publishable key, not the demo's", async () => {
+  const response = await fetch(`${demo.url}/api/checkout-session`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ productId: "jinked-sticker-pack", quantity: 1 }),
+  });
+  const session = await response.json();
+  assert.equal(session.demoPublishableKey, "pk_test_platform_account");
+  assert.notEqual(session.demoPublishableKey, "pk_test_simulated_account");
+
+  const config = await (await fetch(`${demo.url}/api/demo-config`)).json();
+  assert.equal(config.cardRail, true, "the card rail follows the platform key in live mode");
+});
+
+// The common testnet setup runs the demo on the platform's own Stripe account,
+// where one key serves both modes. That deployment must keep working untouched.
+test("live mode falls back to the single key when only one account is in play", async () => {
+  const single = await startDemo(upstream.url, {
+    BIFY_DEMO_STRIPE_KEY: "pk_test_one_account",
+    BIFY_PLATFORM_STRIPE_PUBLISHABLE_KEY: "",
+  });
+  try {
+    const config = await (await fetch(`${single.url}/api/demo-config`)).json();
+    assert.equal(config.cardRail, true, "one configured key must still enable the card rail");
+
+    const session = await (await fetch(`${single.url}/api/checkout-session`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ productId: "jinked-sticker-pack", quantity: 1 }),
+    })).json();
+    assert.equal(session.demoPublishableKey, "pk_test_one_account");
+  } finally {
+    single.close();
+  }
 });
 
 test("a GET for a minted certificate is proxied without a body", async () => {

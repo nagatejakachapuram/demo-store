@@ -27,11 +27,33 @@ export const config = {
   mockMode: truthy(process.env.BIFY_DEMO_MOCK),
 
   /**
-   * Stripe PUBLISHABLE key (pk_...). Publishable keys are public by design and
-   * ship in client-side JS. Setting this renders the card rail alongside USDC.
-   * A secret key (sk_...) must never be placed here.
+   * Stripe PUBLISHABLE key (pk_...) for SIMULATED mode, where the demo server
+   * mints the PaymentIntent itself. It must belong to the same Stripe account
+   * as `demoStripeSecretKey` below. Publishable keys are public by design and
+   * ship in client-side JS; a secret key (sk_...) must never be placed here.
    */
   demoStripeKey: (process.env.BIFY_DEMO_STRIPE_KEY ?? "").trim(),
+
+  /**
+   * Stripe PUBLISHABLE key for LIVE mode — a different key, and usually a
+   * different Stripe account.
+   *
+   * The commerce API opens a destination charge: the PaymentIntent is created
+   * on the BIFY PLATFORM account, with `transfer_data[destination]` moving the
+   * partner's share to their connected account and `application_fee_amount`
+   * retaining the platform fee. A client secret from that intent can only be
+   * confirmed with the PLATFORM account's publishable key.
+   *
+   * The commerce API never returns a publishable key, so the partner page has
+   * to supply it. Passing a key from another account would hand Stripe.js a
+   * client secret minted by an account it does not belong to, and the payment
+   * would be rejected in the browser after the charge had already opened.
+   *
+   * Falls back to the simulated-mode key, which is correct whenever the demo
+   * runs on the platform's own Stripe account — the usual case on testnet. Set
+   * this explicitly once the two are different accounts.
+   */
+  platformStripeKey: (process.env.BIFY_PLATFORM_STRIPE_PUBLISHABLE_KEY || process.env.BIFY_DEMO_STRIPE_KEY || "").trim(),
 
   /**
    * Stripe SECRET key (sk_test_...), server-side only.

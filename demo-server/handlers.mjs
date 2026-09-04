@@ -86,7 +86,7 @@ export async function demoConfig() {
       // In simulated mode this server mints the intent, so it needs both keys.
       // In live mode the commerce backend mints it and decides the rails; the
       // page only needs the publishable key to render Stripe.js.
-      cardRail: config.mockMode ? mock.cardRailReady() : config.demoStripeKey !== "",
+      cardRail: config.mockMode ? mock.cardRailReady() : config.platformStripeKey !== "",
       error,
     },
   };
@@ -161,12 +161,22 @@ export async function createCheckoutSession({ body, query = {} }) {
 }
 
 /**
- * Dev-only passthrough so the demo page can hand the widget a Stripe
- * publishable key. A real partner configures this on its own page; it is never
- * part of the Commerce API response.
+ * Hands the widget the Stripe publishable key for whichever account actually
+ * minted the PaymentIntent. A real partner configures this on its own page; it
+ * is never part of the Commerce API response.
+ *
+ * The two modes mint on different Stripe accounts — simulated mode on the
+ * demo's own, live mode on the BIFY platform account via a destination charge —
+ * so they need different publishable keys. Sending the wrong one fails only in
+ * the browser, after the charge has already been opened.
  */
 function withDemoKey(session) {
-  return config.demoStripeKey ? { ...session, demoPublishableKey: config.demoStripeKey } : session;
+  const publishableKey = cardPublishableKey();
+  return publishableKey ? { ...session, demoPublishableKey: publishableKey } : session;
+}
+
+function cardPublishableKey() {
+  return config.mockMode ? config.demoStripeKey : config.platformStripeKey;
 }
 
 // ---------------------------------------------------------------------------

@@ -100,7 +100,8 @@ on Vercel.
 | `BIFY_PARTNER_API_KEY` | yes | **Secret.** Never returned to the browser. |
 | `BIFY_PARTNER_ID` | no | Display only. |
 | `BIFY_DEMO_MOCK` | no | `1` forces simulated mode. Keep it available so a wedged testnet does not take the docs link dark. |
-| `BIFY_DEMO_STRIPE_KEY` | no | Stripe **publishable** key (`pk_...`), used by Stripe.js in the browser. A secret key here would be served to the browser — never set one. |
+| `BIFY_DEMO_STRIPE_KEY` | no | Stripe **publishable** key (`pk_...`) for **simulated** mode — the demo's own account, pairing with `BIFY_DEMO_STRIPE_SECRET_KEY`. A secret key here would be served to the browser — never set one. |
+| `BIFY_PLATFORM_STRIPE_PUBLISHABLE_KEY` | no | Stripe **publishable** key for **live** mode — the BIFY *platform* account, matching the backend's `BIFY_STRIPE_SECRET_KEY`. Required for the live card rail; see below. |
 | `BIFY_DEMO_STRIPE_SECRET_KEY` | no | Stripe **secret** test key (`sk_test_...`), server-side only. Needed for the card rail in simulated mode — see below. |
 | `BIFY_DEMO_SETTLE_MS` | no | Simulated settlement delay, default `2500`. |
 
@@ -111,10 +112,26 @@ PaymentIntent **client secret**. A publishable key cannot mint one — Stripe
 requires a secret key for `POST /v1/payment_intents` — so the two modes differ:
 
 - **Live mode**: the commerce backend mints the intent (`BIFY_STRIPE_SECRET_KEY`
-  on the backend). The demo only needs `BIFY_DEMO_STRIPE_KEY`.
+  on the backend) as a **destination charge** — created on the BIFY *platform*
+  account, with the partner's share transferred to their connected account and
+  the platform fee retained. A client secret from that intent can only be
+  confirmed with the **platform account's** publishable key, so the demo needs
+  `BIFY_PLATFORM_STRIPE_PUBLISHABLE_KEY`. The commerce API never returns a
+  publishable key; the partner page supplies it.
 - **Simulated mode**: there is no backend, so the demo server mints a real
-  **test-mode** intent itself against `api.stripe.com`. That needs
-  `BIFY_DEMO_STRIPE_SECRET_KEY`.
+  **test-mode** intent itself against `api.stripe.com`. That intent is on the
+  demo's *own* Stripe account, so it needs that account's pair —
+  `BIFY_DEMO_STRIPE_SECRET_KEY` and `BIFY_DEMO_STRIPE_KEY`.
+
+The two modes mint on different Stripe accounts, so they take different
+publishable keys. Passing the simulated-mode key in live mode hands Stripe.js a
+client secret minted by an account it does not belong to: the card form fails in
+the browser *after* the charge has already been opened.
+
+Live card payments also require the partner to have a Stripe Connect account
+registered (`POST /v1/merchant/card-account`). Without one the commerce API
+refuses to open the charge, because a destination charge has nowhere to send the
+partner's share.
 
 With both keys set the buyer sees the genuine Stripe card form and can pay with
 Stripe's test card `4242 4242 4242 4242` (any future expiry, any CVC). With
