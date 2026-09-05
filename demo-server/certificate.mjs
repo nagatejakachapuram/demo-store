@@ -5,6 +5,8 @@
 // design can be viewed without a Commerce deployment, and so the QR code
 // resolves back to the demo itself.
 
+import { BIFY_LOGO } from "@bify/commerce-widget";
+
 import { formatUsdc } from "./catalog.mjs";
 import { config } from "./config.mjs";
 
@@ -18,14 +20,14 @@ const ICON = {
   alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>',
 };
 
-const LOGO_PATH =
-  "M79.98 177.56C77.35 176.86 74.58 176.78 71.95 176.22C17.3 164.56-14.61 108.07 6.64 55.76C14.07 37.2 27.64 21.75 45.09 11.95C66.19-0.11 86.91-1.94 110.59 1.61C112.05 1.83 118.25 0.39 120.58 0.25C123.58 1.75 127.35 3.7 129.68 6.13C130.5 6.99 131.22 9.29 132.24 9.86C136.23 12.04 140.02 14.18 143.73 16.86C159.12 27.84 170.69 43.33 176.83 61.19C178.54 66.3 179.96 71.96 180.65 77.31C183.55 100.03 178.04 122.43 164.34 140.77C153.12 156.02 137.44 167.44 119.47 173.46C116.06 174.58 113.42 175.36 109.94 176.08C108.1 176.46 103.39 177.07 101.9 177.56H79.98Z";
-
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
 }
 
-const mark = (size) => `<svg viewBox="0 0 182 178" fill="${ACCENT}" width="${size}" height="${size}"><path d="${LOGO_PATH}"/></svg>`;
+// The real brand mark, taken from the widget package so the certificate and
+// the checkout that issued it can never drift apart. It is a data: URI, which
+// the page CSP already allows for the widget's inlined logo.
+const mark = (size) => `<img src="${BIFY_LOGO}" alt="" width="${size}" height="${size}" style="display:block;width:${size}px;height:${size}px;object-fit:contain">`;
 
 function corporateSeal() {
   const a = ACCENT;
@@ -47,24 +49,33 @@ export function renderCertificatePage(rawId, snapshot = {}) {
   const id = /^0x[0-9a-fA-F]{0,64}$/.test(rawId) ? rawId : `0x${"0".repeat(64)}`;
   const shortId = id.length > 26 ? `${id.slice(0, 14)}…${id.slice(-8)}` : id;
   const hexBody = (id.replace(/^0x/, "") + "0".repeat(64)).slice(0, 64);
-  const rot = (n) => (hexBody.slice(n) + hexBody).slice(0, 64);
 
-  const productName = snapshot.productName || "BIFY merchandise";
-  const quantity = snapshot.quantity || 1;
-  const totalUsdc = formatUsdc(snapshot.totalPriceUsdc ?? "0");
-  const unitUsdc = formatUsdc(snapshot.unitPriceUsdc ?? "0");
-  const ownerAddr = snapshot.owner || "0x0e801d84fa97b50751dbf25036d067dcf18858bf";
+  // Every value below is the real purchase snapshot published by
+  // `/v1/public/certificates/{id}` — a certificate that hides what it certifies
+  // is not a certificate. Nothing here is fabricated: a field the record does
+  // not carry renders as an em dash rather than a plausible-looking stand-in,
+  // because a wrong holder address or a zero price under a "Digitally verified"
+  // seal is worse than a visible gap.
+  const NONE = "\u2014";
+  const productName = snapshot.productName || "BIFY Commerce purchase certificate";
+  const quantity = snapshot.quantity ? String(snapshot.quantity) : NONE;
+  const totalUsdc = snapshot.totalPriceUsdc ? formatUsdc(snapshot.totalPriceUsdc) : NONE;
+  const unitUsdc = snapshot.unitPriceUsdc ? formatUsdc(snapshot.unitPriceUsdc) : NONE;
+  const ownerAddr = snapshot.owner || "";
   const networkLabel = snapshot.network === "base" ? "Base" : "Base Sepolia";
-  const orderRef = snapshot.externalOrderId || `BIFY-${Date.now().toString().slice(-8)}`;
-  const now = snapshot.mintedAt ? new Date(snapshot.mintedAt) : new Date();
-  const dateLong = now.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  const orderRef = snapshot.externalOrderId || NONE;
+  const issuedAt = snapshot.mintedAt ? new Date(snapshot.mintedAt) : null;
+  const now = issuedAt ?? new Date();
+  const dateLong = issuedAt ? issuedAt.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : NONE;
   const scanTime = now.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
-  const wallet = `${ownerAddr.slice(0, 22)}​${ownerAddr.slice(22)}`;
-  const holder = `${ownerAddr.slice(0, 6)}...${ownerAddr.slice(-4)}`;
+  const wallet = ownerAddr ? `${ownerAddr.slice(0, 22)}​${ownerAddr.slice(22)}` : NONE;
+  const holder = ownerAddr ? `${ownerAddr.slice(0, 6)}...${ownerAddr.slice(-4)}` : NONE;
   const serial = `BIFY-${hexBody.slice(0, 8).toUpperCase()}`;
-  const metadataHash = snapshot.metadataHash || rot(0);
-  const purchaseRef = snapshot.purchaseId || rot(8);
-  const orderScopeRef = snapshot.orderScopeId || rot(16);
+  const metadataHash = snapshot.metadataHash || NONE;
+  const purchaseRef = snapshot.purchaseId || NONE;
+  const orderScopeRef = snapshot.orderScopeId || NONE;
+  // The mint voucher signature is an authorization credential, not a purchase
+  // detail, so the public record deliberately never carries it.
   const voucherSignature = snapshot.signature || "Available after signed claim";
 
   const detail = (k, v) => `<div class="drow"><p class="lbl">${escapeHtml(k)}</p><p class="val">${escapeHtml(v)}</p></div>`;
