@@ -280,6 +280,9 @@ export async function publicApi({ path, body = {}, origin }) {
   if (!order) return { status: 404, json: { error: { message: "This checkout session is unknown." } } };
 
   if (step === "details") return { status: 200, json: { data: { status: "ok" } } };
+  // 200 stands in for a chain that has already reached the required
+  // confirmations. The real backend answers 202 while this same transaction
+  // hash is still reaching finality.
   if (step === "certificate/confirm") return { status: 200, json: { ok: true } };
 
   if (step === "card/intent") {

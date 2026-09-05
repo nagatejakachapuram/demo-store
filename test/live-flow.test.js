@@ -101,8 +101,10 @@ test("the client token survives the proxy on every public checkout call", async 
   const calls = {
     details: { clientToken: SESSION.clientToken, customer: { name: "Ada Lovelace", email: "ada@example.test" } },
     authorize: { clientToken: SESSION.clientToken, payer: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" },
+    "payment/confirm": { clientToken: SESSION.clientToken, transactionHash: `0x${"a".repeat(64)}` },
     "card/intent": { clientToken: SESSION.clientToken },
     "certificate/voucher": { clientToken: SESSION.clientToken },
+    "certificate/confirm": { clientToken: SESSION.clientToken, certificateId: `0x${"b".repeat(64)}`, transactionHash: `0x${"c".repeat(64)}` },
     "certificate/email": { clientToken: SESSION.clientToken },
   };
 
