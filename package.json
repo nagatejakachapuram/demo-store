@@ -15,7 +15,7 @@
     "test": "node --test \"test/*.test.js\""
   },
   "dependencies": {
-    "@bify/commerce-widget": "0.1.0-rc.3",
+    "@bify/commerce-widget": "0.1.0-rc.4",
     "@bify/sdk": "0.1.0-rc.2"
   }
 }
