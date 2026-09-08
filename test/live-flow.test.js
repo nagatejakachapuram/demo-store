@@ -206,3 +206,21 @@ test("a GET for a minted certificate is proxied without a body", async () => {
   assert.equal(upstream.seen.at(-1).path, `/v1/public/certificates/${id}`);
   assert.equal(upstream.seen.at(-1).body, "");
 });
+
+
+test("existing live certificate QR routes redirect to public verification without fetching a decorative fallback", async () => {
+  const id = `0x${"a".repeat(64)}`;
+  const before = upstream.seen.length;
+  const response = await fetch(`${demo.url}/certificate/${id}`, { redirect: "manual" });
+  assert.equal(response.status, 307);
+  assert.equal(response.headers.get("location"), `https://account.bify.io/verify/${id}`);
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.equal(upstream.seen.length, before);
+  assert.equal(await response.text(), "");
+});
+
+test("malformed certificate URLs never render a valid seal", async () => {
+  const response = await fetch(`${demo.url}/certificate/invalid`, { redirect: "manual" });
+  assert.equal(response.status, 404);
+  assert.doesNotMatch(await response.text(), /Valid digital seal|Digitally verified/);
+});

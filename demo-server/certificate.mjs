@@ -54,7 +54,7 @@ export function renderCertificatePage(rawId, snapshot = {}) {
   // `/v1/public/certificates/{id}` — a certificate that hides what it certifies
   // is not a certificate. Nothing here is fabricated: a field the record does
   // not carry renders as an em dash rather than a plausible-looking stand-in,
-  // because a wrong holder address or a zero price under a "Digitally verified"
+  // because a wrong holder address or a zero price under a "Demonstration · not verified"
   // seal is worse than a visible gap.
   const NONE = "\u2014";
   const productName = snapshot.productName || "BIFY Commerce purchase certificate";
@@ -65,9 +65,8 @@ export function renderCertificatePage(rawId, snapshot = {}) {
   const networkLabel = snapshot.network === "base" ? "Base" : "Base Sepolia";
   const orderRef = snapshot.externalOrderId || NONE;
   const issuedAt = snapshot.mintedAt ? new Date(snapshot.mintedAt) : null;
-  const now = issuedAt ?? new Date();
   const dateLong = issuedAt ? issuedAt.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : NONE;
-  const scanTime = now.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+  const scanTime = "Not checked · demonstration";
   const wallet = ownerAddr ? `${ownerAddr.slice(0, 22)}​${ownerAddr.slice(22)}` : NONE;
   const holder = ownerAddr ? `${ownerAddr.slice(0, 6)}...${ownerAddr.slice(-4)}` : NONE;
   const serial = `BIFY-${hexBody.slice(0, 8).toUpperCase()}`;
@@ -172,8 +171,8 @@ h1.serif,.holder.serif,.item h2,.certifies .holder,.reg-v,.auth-sig .imprint{fon
     <div class="sealbox">${mark(38)}<span class="who"><small>BIFY merchandise authenticity office</small><strong>Issuer Authority</strong></span></div>
     <p class="eyebrow">Official issue record</p>
     <h1 class="serif">Certificate of Authenticity</h1>
-    <p class="lede">This instrument certifies that the item referenced below was issued through the official BIFY merchandise program and is entered upon the BIFY authenticity ledger as a valid issue bearing the seal and digital signature of the issuer authority.</p>
-    <div class="badges"><span class="verified">Digitally verified</span><span class="idbox"><small>Certificate ID</small><strong>${escapeHtml(shortId)}</strong></span></div>
+    <p class="lede">This is a simulated purchase certificate preview. It is not evidence of payment, minting, ownership, or authenticity.</p>
+    <div class="badges"><span class="verified">Demonstration · not verified</span><span class="idbox"><small>Certificate ID</small><strong>${escapeHtml(shortId)}</strong></span></div>
     <div class="certifies">
       <p class="th">This certifies that</p>
       <p class="holder serif">${escapeHtml(holder)}</p>
@@ -197,9 +196,9 @@ h1.serif,.holder.serif,.item h2,.certifies .holder,.reg-v,.auth-sig .imprint{fon
     </section>
     <aside>
       ${simulatedNotice}
-      <div class="card seal-card"><p class="k">Corporate seal</p><div class="seal-wrap">${corporateSeal()}</div>${sealMeta(ICON.shield, "Seal Status", "Valid digital seal")}${sealMeta(ICON.star, "Last Scan", scanTime)}</div>
-      <div class="card scan"><p class="k">Scan to validate</p><div class="scan-inner"><div class="qr" data-cert-qr></div><p>Scan this code to open the live BIFY validation route for this certificate and confirm the current authenticity status.</p></div></div>
-      <div class="card authority"><p class="k">Issuer authority</p><div class="auth-inner"><p class="name">BIFY Merchandise Authenticity Office</p><p class="role">Digitally issued and sealed</p><div class="auth-sig"><p class="imprint serif">BIFY Studio</p><small>Official issuer signature imprint</small></div></div></div>
+      <div class="card seal-card"><p class="k">Corporate seal</p><div class="seal-wrap">${corporateSeal()}</div>${sealMeta(ICON.shield, "Seal Status", "Demonstration · not verified")}${sealMeta(ICON.star, "Last checked", scanTime)}</div>
+      <div class="card scan"><p class="k">Demonstration QR</p><div class="scan-inner"><div class="qr" data-cert-qr></div><p>This is a simulated certificate. Its QR reopens this preview and does not perform live verification.</p></div></div>
+      <div class="card authority"><p class="k">Issuer authority</p><div class="auth-inner"><p class="name">BIFY Merchandise Authenticity Office</p><p class="role">Digitally issued and sealed</p><div class="auth-sig"><p class="imprint serif">BIFY Studio</p><small>Illustrative issuer brand mark</small></div></div></div>
       <div class="notice"><div class="row"><span class="ic">${ICON.alert}</span><div><p class="t">Inspection notice</p><p class="c">Trust this document only when the BIFY seal is valid, the certificate ID matches the issued record, and the scan route resolves to an active authenticity page.</p></div></div></div>
       ${registry("Recorded consideration", totalUsdc, "Entered as settled purchase consideration on the BIFY merchandise ledger.")}
       ${registry("Issue timestamp", dateLong, "Issued under the authority of the BIFY merchandise authenticity office.")}

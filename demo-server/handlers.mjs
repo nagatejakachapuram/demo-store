@@ -248,7 +248,7 @@ function rewriteCertificateLinks(value, origin) {
   if (!value || typeof value !== "object") return value;
   const cert = typeof value.id === "string" && typeof value.verificationUrl === "string" ? value : value.certificate;
   if (cert && typeof cert === "object" && typeof cert.id === "string") {
-    cert.verificationUrl = `${origin}/certificate/${cert.id}`;
+    cert.verificationUrl = config.mockMode ? `${origin}/certificate/${cert.id}` : `${config.certificateVerificationBaseURL}/${encodeURIComponent(cert.id)}`;
   }
   return value;
 }
@@ -258,6 +258,12 @@ function rewriteCertificateLinks(value, origin) {
 // ---------------------------------------------------------------------------
 
 export async function certificatePage({ id, origin }) {
+  if (!/^0x[0-9a-fA-F]{64}$/.test(id) || /^0x0{64}$/.test(id)) {
+    return { status: 404, headers: { ...noStore, "content-type": "text/html; charset=utf-8" }, html: "<!doctype html><title>Certificate not found</title><h1>Certificate not found</h1><p>Check the certificate ID.</p>" };
+  }
+  if (!config.mockMode) {
+    return { status: 307, headers: { ...noStore, location: `${config.certificateVerificationBaseURL}/${encodeURIComponent(id)}` }, html: "" };
+  }
   const snapshot = config.mockMode ? mockSnapshot(id) : await liveSnapshot(id);
   return {
     status: 200,

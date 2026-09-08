@@ -37,6 +37,7 @@ function publishableKeyOnly(value, source) {
 }
 
 export const config = {
+  certificateVerificationBaseURL: (process.env.BIFY_CERTIFICATE_VERIFICATION_BASE_URL ?? "https://account.bify.io/verify").replace(/\/$/, ""),
   /** Commerce API base. Defaults to the local backend for `npm run dev`. */
   backendURL: (process.env.BIFY_BACKEND_URL ?? "http://localhost:8081").replace(/\/$/, ""),
   partnerID: process.env.BIFY_PARTNER_ID ?? "partner_123",
