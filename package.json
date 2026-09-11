@@ -16,6 +16,6 @@
   },
   "dependencies": {
     "@bify/commerce-widget": "0.1.0-rc.8",
-    "@bify/sdk": "0.1.0-rc.6"
+    "@bify/sdk": "0.1.0-rc.7"
   }
 }
