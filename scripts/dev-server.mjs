@@ -125,7 +125,7 @@ async function handler(req, res) {
     if (url.pathname === "/api/checkout-session" && req.method === "POST") {
       const body = await readJsonBody(req);
       const query = Object.fromEntries(url.searchParams);
-      return send(res, await createCheckoutSession({ body, query }));
+      return send(res, await createCheckoutSession({ body, query, origin }));
     }
 
     if (url.pathname.startsWith("/api/bify-api/")) {

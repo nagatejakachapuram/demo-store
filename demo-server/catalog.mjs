@@ -254,6 +254,11 @@ export function formatUsdc(base) {
   }
 }
 
+/** Where a product's photograph is served from, on this demo's own origin. */
+export function productImagePath(product) {
+  return `/img/${product.id}.jpg`;
+}
+
 /**
  * The catalogue as the browser sees it (identical — there is nothing secret
  * here), with the derived fields the storefront needs. Photography is served
@@ -263,7 +268,7 @@ export function formatUsdc(base) {
 export function publicCatalog() {
   return CATALOG.map((product) => ({
     ...product,
-    image: `/img/${product.id}.jpg`,
+    image: productImagePath(product),
     unitPriceLabel: formatUsdc(product.unitPriceUsdc),
   }));
 }

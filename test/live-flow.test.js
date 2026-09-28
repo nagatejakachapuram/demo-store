@@ -93,6 +93,36 @@ test("a checkout session is priced from the server catalogue, not the request", 
   assert.equal(sent.externalProductId, "jinked-sticker-pack");
 });
 
+// The buyer's BIFY Account shows the product photo on the order. It is only sent as a full https URL on
+// this demo's own origin, the way a deployment is reached; from localhost it is left out.
+function lastSessionRequest(productId) {
+  const created = upstream.seen.filter((entry) => entry.path === "/v1/checkout/sessions").map((entry) => JSON.parse(entry.body));
+  return created.reverse().find((sent) => sent.externalProductId === productId);
+}
+
+test("a checkout on the deployed store sends the product photo as an https URL", async () => {
+  const response = await fetch(`${demo.url}/api/checkout-session`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-forwarded-host": "jinked.example.test", "x-forwarded-proto": "https" },
+    body: JSON.stringify({ productId: "jinked-ceramic-mug", quantity: 1 }),
+  });
+  assert.equal(response.status, 200);
+  const sent = lastSessionRequest("jinked-ceramic-mug");
+  assert.equal(sent?.productImageUrl, "https://jinked.example.test/img/jinked-ceramic-mug.jpg");
+});
+
+test("a checkout from localhost sends no product photo", async () => {
+  const response = await fetch(`${demo.url}/api/checkout-session`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ productId: "jinked-canvas-tote", quantity: 1 }),
+  });
+  assert.equal(response.status, 200);
+  const sent = lastSessionRequest("jinked-canvas-tote");
+  assert.ok(sent, "the session was not created");
+  assert.equal("productImageUrl" in sent, false);
+});
+
 // The defect this file exists for: the client token travels in the body of
 // every public checkout call, and a proxy that re-encodes the body drops it.
 // Upstream then reports "checkout session is invalid or expired", which reads

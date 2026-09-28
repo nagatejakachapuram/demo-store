@@ -12,7 +12,7 @@
 
 import { randomUUID } from "node:crypto";
 import { BifyClient } from "@bify/sdk";
-import { clampQuantity, findProduct, formatUsdc, publicCatalog, totalPriceUsdc } from "./catalog.mjs";
+import { clampQuantity, findProduct, formatUsdc, productImagePath, publicCatalog, totalPriceUsdc } from "./catalog.mjs";
 import { config, CONTENT_SECURITY_POLICY } from "./config.mjs";
 import { renderCertificatePage } from "./certificate.mjs";
 import * as mock from "./mock.mjs";
@@ -92,6 +92,16 @@ export async function demoConfig() {
   };
 }
 
+/** `{ productImageUrl }` for a product, as an absolute URL on this demo's https origin, or nothing. */
+function productImageField(product, origin) {
+  if (typeof origin !== "string" || !origin.startsWith("https://")) return {};
+  try {
+    return { productImageUrl: new URL(productImagePath(product), origin).href };
+  } catch {
+    return {};
+  }
+}
+
 // ---------------------------------------------------------------------------
 // POST /api/checkout-session
 // ---------------------------------------------------------------------------
@@ -109,7 +119,7 @@ export async function demoConfig() {
  * posts `{externalOrderId, quantity}` only — hence the demo page points its
  * `sessionRefreshEndpoint` at `/api/checkout-session?productId=...`).
  */
-export async function createCheckoutSession({ body, query = {} }) {
+export async function createCheckoutSession({ body, query = {}, origin }) {
   if (body !== undefined && (typeof body !== "object" || body === null || Array.isArray(body))) {
     return fail(400, "Checkout request is invalid.");
   }
@@ -142,6 +152,10 @@ export async function createCheckoutSession({ body, query = {} }) {
       quantity,
       externalOrderId,
       shippingRequired: product.shippingRequired,
+      // The product photo, shown as the order thumbnail in the buyer's BIFY Account. BIFY keeps it with
+      // the order, and accepts only a full https URL on a public host, so it is sent only when this
+      // demo is itself served over https (not from localhost).
+      ...productImageField(product, origin),
       // The frontend package requires a certificate recipient before it can
       // safely offer the walletless card rail. This testnet demo already owns
       // a deterministic buyer fixture, so bind live demo sessions to the same
