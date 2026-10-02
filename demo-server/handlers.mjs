@@ -156,11 +156,11 @@ export async function createCheckoutSession({ body, query = {}, origin }) {
       // the order, and accepts only a full https URL on a public host, so it is sent only when this
       // demo is itself served over https (not from localhost).
       ...productImageField(product, origin),
-      // The frontend package requires a certificate recipient before it can
-      // safely offer the walletless card rail. This testnet demo already owns
-      // a deterministic buyer fixture, so bind live demo sessions to the same
-      // recipient instead of mounting a second checkout UI to collect one.
-      walletAddress: mock.MOCK_ADDRESSES.MOCK_BUYER,
+      // No walletAddress: the buyer's purchase must belong to the buyer. A USDC
+      // buyer pays from their own wallet, which becomes the owner; a card buyer
+      // signs in to BIFY Account from the checkout and chooses (or is given) the
+      // wallet that will own it. Naming a wallet here would hand every card
+      // order to that wallet instead.
       idempotencyKey: `checkout:${externalOrderId}`,
       certificate: { enabled: true },
     });
