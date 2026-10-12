@@ -188,3 +188,9 @@ than by Stripe's own. Drop them all if you never enable the card rail.
 matching `demo/img/<product-id>.jpg` (4:5, ~1100×1375); the image path is
 derived from the product id. See `demo/img/CREDITS.md` for the current
 photography and its licence.
+
+## Discovery referrals
+
+Discovery links work as ordinary product links. The initial same-origin checkout request captures the consented landing parameter automatically; a product-scoped HttpOnly cookie retains it for refreshes and return visits. The server SDK forwards it privately when creating the checkout. There is no token field for merchants or shoppers to fill in. The product page explicitly permits its referrer only for that same-origin request; external images and links retain the page's no-referrer policy.
+
+Deploy the Commerce/Discovery integration. A request-scoped compatibility adapter preserves referral metadata even with the currently pinned published SDK, while retaining SDK validation and server-side authentication. Commerce's durable worker sends the confirmed order, and Discovery verifies ownership and establishes the product binding. The cookie carries only an attribution candidate; Discovery's server-side click record and expiry remain authoritative.

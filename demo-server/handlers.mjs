@@ -10,6 +10,7 @@
 // This is the MERCHANT side of the integration. It exists because the partner
 // API key must never reach the browser — not because the demo has real data.
 
+import { discoveryReferral, discoveryCheckoutFetch } from "./discovery.mjs";
 import { randomUUID } from "node:crypto";
 import { BifyClient } from "@bify/sdk";
 import { clampQuantity, findProduct, formatUsdc, productImagePath, publicCatalog, totalPriceUsdc } from "./catalog.mjs";
@@ -19,7 +20,14 @@ import * as mock from "./mock.mjs";
 
 /** Lazily constructed so mock mode never requires a partner key to be present. */
 let client;
-function bify() {
+function bify(referralCode) {
+  if (referralCode) {
+    return new BifyClient({
+      apiKey: config.partnerAPIKey, baseUrl: config.backendURL,
+      network: config.network, timeoutMs: config.upstreamTimeoutMs,
+      fetch: discoveryCheckoutFetch(fetch, config.backendURL, referralCode),
+    });
+  }
   if (!client) {
     client = new BifyClient({
       apiKey: config.partnerAPIKey,
@@ -119,7 +127,7 @@ function productImageField(product, origin) {
  * posts `{externalOrderId, quantity}` only — hence the demo page points its
  * `sessionRefreshEndpoint` at `/api/checkout-session?productId=...`).
  */
-export async function createCheckoutSession({ body, query = {}, origin }) {
+export async function createCheckoutSession({ body, query = {}, origin, referer, cookie }) {
   if (body !== undefined && (typeof body !== "object" || body === null || Array.isArray(body))) {
     return fail(400, "Checkout request is invalid.");
   }
@@ -128,6 +136,8 @@ export async function createCheckoutSession({ body, query = {}, origin }) {
   const product = findProduct(input.productId ?? query.productId);
   if (!product) return fail(404, "That product is not in the catalogue.");
 
+  const referral = discoveryReferral({referer, cookie, origin, productId: product.id});
+  const responseHeaders = {...noStore, ...(referral.cookie ? {"set-cookie":referral.cookie} : {})};
   const quantity = clampQuantity(product, Number(input.quantity ?? 1));
   const externalOrderId =
     typeof input.externalOrderId === "string" && /^[A-Za-z0-9:_-]{1,120}$/.test(input.externalOrderId.trim())
@@ -136,15 +146,16 @@ export async function createCheckoutSession({ body, query = {}, origin }) {
 
   if (config.mockMode) {
     const session = mock.createSession({ product, quantity, externalOrderId });
-    return { status: 200, headers: noStore, json: withDemoKey(session) };
+    return { status: 200, headers: responseHeaders, json: withDemoKey(session) };
   }
 
   try {
     // The server SDK is the trusted integration surface. It validates the order
     // snapshot, attaches the idempotency key, and signs the request with the
     // partner credential — none of which can happen in the browser.
-    const session = await bify().checkout.createOrderSession({
+    const session = await bify(referral.code).checkout.createOrderSession({
       externalProductId: product.id,
+      discoveryReferralCode: referral.code,
       productName: product.name,
       productCategory: product.category,
       unitPriceUsdc: product.unitPriceUsdc,
@@ -164,7 +175,7 @@ export async function createCheckoutSession({ body, query = {}, origin }) {
       idempotencyKey: `checkout:${externalOrderId}`,
       certificate: { enabled: true },
     });
-    return { status: 200, headers: noStore, json: withDemoKey(session) };
+    return { status: 200, headers: responseHeaders, json: withDemoKey(session) };
   } catch (error) {
     // BifyApiError carries a safe, already-sanitised message.
     const message = typeof error?.message === "string" && error.message.length <= 240

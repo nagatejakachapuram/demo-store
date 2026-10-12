@@ -69,6 +69,9 @@ async function startCheckout(product, config) {
     method: "POST",
     headers: { "content-type": "application/json", accept: "application/json" },
     credentials: "same-origin",
+    // Only this same-origin request needs the landing URL for automatic referral
+    // capture. Keep the page's no-referrer policy for images and external links.
+    referrerPolicy: "same-origin",
     cache: "no-store",
     body: JSON.stringify({
       productId: product.id,

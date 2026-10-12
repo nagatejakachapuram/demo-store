@@ -12,5 +12,5 @@ export default guard(async (req, res) => {
     return;
   }
   const body = await jsonBody(req);
-  sendResult(res, await createCheckoutSession({ body, query: req.query ?? {}, origin: requestOrigin(req) }));
+  sendResult(res, await createCheckoutSession({ body, query: req.query ?? {}, origin: requestOrigin(req), referer: req.headers.referer, cookie: req.headers.cookie }));
 });
