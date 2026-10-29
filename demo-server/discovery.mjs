@@ -24,7 +24,7 @@ export function discoveryReferral({ referer, cookie = "", origin, productId }) {
   let code;
   try {
     const landing = new URL(referer);
-    if (landing.origin === new URL(origin).origin && landing.pathname === "/product.html" && landing.searchParams.get("id") === productId && landing.searchParams.getAll("bify_ref").length === 1) {
+    if (landing.origin === new URL(origin).origin && ["/product", "/product.html"].includes(landing.pathname) && landing.searchParams.get("id") === productId && landing.searchParams.getAll("bify_ref").length === 1) {
       const candidate = landing.searchParams.get("bify_ref");
       if (valid(candidate)) code = candidate;
     }

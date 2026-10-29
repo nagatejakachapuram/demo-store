@@ -32,3 +32,15 @@ test("published SDK compatibility preserves automatic referral without leaking i
  await first(backend+"/v1/orders",request);
  assert.equal(sent[2].init,request);assert.equal(sent[3].init,request);
 });
+
+test("Vercel clean product URLs preserve referrals while unrelated routes are rejected", () => {
+ const code="A".repeat(43),origin="https://shop.example",productId="hoodie";
+ for(const path of ['/product','/product.html']) {
+  const result=discoveryReferral({referer:`${origin}${path}?id=hoodie&bify_ref=${code}`,origin,productId});
+  assert.equal(result.code,code,`referral lost on ${path}`);
+  assert.match(result.cookie,/HttpOnly/);
+ }
+ for(const path of ['/','/products','/other/product','/product/another']) {
+  assert.equal(discoveryReferral({referer:`${origin}${path}?id=hoodie&bify_ref=${code}`,origin,productId}).code,undefined);
+ }
+});
